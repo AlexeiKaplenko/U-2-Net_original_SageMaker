@@ -22,15 +22,6 @@ from data_loader import SalObjDataset
 from model import U2NET # full size version 173.6 MB
 from model import U2NETP # small version u2net 4.7 MB
 
-# normalize the predicted SOD probability map
-def normPRED(d):
-    ma = torch.max(d)
-    mi = torch.min(d)
-
-    dn = (d-mi)/(ma-mi)
-
-    return dn
-
 def save_output(image_name,pred,d_dir):
 
     predict = pred
@@ -57,33 +48,12 @@ def main():
     # --------- 1. get image path and name ---------
     model_name='u2netp'#u2netp
 
-    # image_dir = os.path.join(os.getcwd(), 'test_data', 'test_images', 'test10')
-    # image_dir = '/home/xkaple00/JUPYTER_SHARED/Digis/Background_removal/dataset/Digis1/Extraction/images'
-
-    # image_dir = '/home/xkaple00/JUPYTER_SHARED/Digis/Background_removal/U-2-Net/train_data/FINAL78_combined1'
-    # prediction_dir = '/home/xkaple00/JUPYTER_SHARED/Digis/Background_removal/U-2-Net/train_data/FINAL78_prior1'
-
-    # image_dir = '/home/xkaple00/JUPYTER_SHARED/Digis/Background_removal/U-2-Net/train_data/FINAL10_combined'
-    # prediction_dir = '/home/xkaple00/JUPYTER_SHARED/Digis/Background_removal/U-2-Net/train_data/FINAL10_prior'
-
-    # image_dir = '/home/xkaple00/JUPYTER_SHARED/Digis/Background_removal/U-2-Net/train_data/FINAL11_combined'
-    # prediction_dir = '/home/xkaple00/JUPYTER_SHARED/Digis/Background_removal/U-2-Net/train_data/FINAL11_prior'
-
-    image_dir = '/home/xkaple00/JUPYTER_SHARED/3D/D2HC-RMVSNet/datasets/dtu/scan1/images'
-    prediction_dir = '/home/xkaple00/JUPYTER_SHARED/3D/D2HC-RMVSNet/datasets/dtu/scan1/masks'
+    image_dir = 'image_dir'
+    prediction_dir = 'prediction_dir'
 
     # prediction_dir = os.path.join(os.getcwd(), 'test_data', model_name + '_results' + os.sep)
 
-    # model_dir = os.path.join(os.getcwd(), 'saved_models', model_name, 'u2netp_bce_itr_2000_train_0.205720_tar_0.016604.pth')
-    # model_dir = os.path.join(os.getcwd(), 'saved_models', model_name, 'u2netp_bce_itr_6000_train_0.220453_tar_0.018197.pth')
-    # model_dir = os.path.join(os.getcwd(), 'saved_models', model_name, 'itr_2000_train_0.220149_tar_0.018103.pth')
-    # model_dir = os.path.join(os.getcwd(), 'saved_models', model_name, 'itr_80000_train_0.132624_tar_0.008422.pth')
-
-    # model_dir = os.path.join(os.getcwd(), 'saved_models', model_name, 'itr_110000_train_0.132303_tar_0.009453.pth')
-
-    model_dir = os.path.join(os.getcwd(), 'saved_models', model_name, 'best2_itr_8000_train_0.124939_tar_0.007863.pth')
-
-    # model_dir = 'mobile_model4_optimized.pt'
+    model_dir = os.path.join(os.getcwd(), 'saved_models', model_name, model_name+'.pth')
 
     img_name_list = sorted(glob.glob(image_dir + os.sep + '*'))
     print(img_name_list)
@@ -107,8 +77,8 @@ def main():
     elif(model_name=='u2netp'):
         print("...load U2NEP---4.7 MB")
         net = U2NETP(3,1)
-    # net.load_state_dict(torch.load(model_dir))
-    net = torch.load(model_dir)
+    net.load_state_dict(torch.load(model_dir))
+#     net = torch.load(model_dir)
     
     # for gpu inference    
     if torch.cuda.is_available():
@@ -154,23 +124,9 @@ def main():
         pred = binary_mask
         #############################
 
-        # #Original
-        # # normalization
-        # pred = d1[0,0,:,:]
-
-        # pred = normPRED(pred)
-        # pred = pred.cpu().detach().numpy()
-        # pred = np.uint8(np.moveaxis(pred, 0, -1) * 255)
-        # _, binary_mask = cv2.threshold(pred,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-        # # _, pred = cv2.threshold(pred,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-
         print('pred_shape', pred.shape)
 
-        # pred = cv2.resize(pred, (width, height), cv2.INTER_LINEAR)
         pred = cv2.resize(pred, (width, height), cv2.INTER_CUBIC)
-        # kernel = np.ones((5,5),np.float32)/25
-        # pred = cv2.filter2D(pred,-1,kernel)
-        # pred[pred<50] = 0
 
         inputs = inputs_test.cpu().detach().numpy()[0]
         input_image = inputs[:3] * 255
@@ -193,17 +149,6 @@ def main():
         # save results to test_results folder
         if not os.path.exists(prediction_dir):
             os.makedirs(prediction_dir, exist_ok=True)
-        # save_output(img_name_list[i_test],pred,prediction_dir)
-
-        # save final image with original file name
-        # image_pil.save(os.path.join(prediction_dir, img_name_list[i_test].split(os.sep)[-1]))
-        
-        # save final image with index in for loop file name
-        # image_pil.save(os.path.join(prediction_dir, '{:03d}'.format(i_test)+'_final_output.png'))
-
-        # hires_image = cv2.cvtColor(hires_image, cv2.COLOR_BGR2RGB)
-        # cv2.imwrite(os.path.join(prediction_dir, '{:03d}'.format(i_test)+'_pred.png'), pred)
-        # cv2.imwrite(os.path.join(prediction_dir, str(i_test)+'_inputs.png'), hires_image)
 
         cv2.imwrite(os.path.join(prediction_dir, img_name_list[i_test].split(os.sep)[-1]), pred)
 
