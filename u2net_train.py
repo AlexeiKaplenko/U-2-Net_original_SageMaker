@@ -50,31 +50,16 @@ def muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, labels_v):
 
 model_name = 'u2net' #'u2netp'
 
-# data_dir = os.path.join(os.getcwd(), 'train_data' + os.sep)
-# tra_image_dir = os.path.join('DUTS', 'DUTS-TR', 'DUTS-TR', 'im_aug' + os.sep)
-# tra_label_dir = os.path.join('DUTS', 'DUTS-TR', 'DUTS-TR', 'gt_aug' + os.sep)
+data_dir = 'train_data/'
 
-data_dir = '/home/xkaple00/JUPYTER_SHARED/Digis/Background_removal/U-2-Net/train_data/'
-# tra_image_dir = 'FINAL78_combined/'
-# tra_label_dir = 'FINAL78_MATTE/'
-
-# tra_image_dir = 'FINAL78_combined2/'
-# tra_label_dir = 'FINAL78_MATTE2_2_interpolated/'
-
-tra_image_dir = 'FINAL11_combined/'
-tra_label_dir = 'FINAL11_MATTE/'
-
+tra_image_dir = 'FINAL12_combined/'
+tra_label_dir = 'FINAL12_MATTE/'
 
 image_ext = '.png'
 label_ext = '.png'
 
 model_dir = os.path.join(os.getcwd(), 'saved_models', model_name + os.sep)
 
-# saved_model_dir = os.path.join(os.getcwd(), 'saved_models', model_name, 'u2netp.pth')
-# saved_model_dir = os.path.join(os.getcwd(), 'saved_models', model_name, 'u2netp_bce_itr_6000_train_0.220453_tar_0.018197.pth')
-# saved_model_dir = os.path.join(os.getcwd(), 'saved_models', model_name, 'itr_106000_train_0.165263_tar_0.012251.pth')
-# saved_model_dir = os.path.join(os.getcwd(), 'saved_models', model_name, 'itr_110000_train_0.132303_tar_0.009453.pth')
-# saved_model_dir = os.path.join(os.getcwd(), 'saved_models', model_name, 'best2_itr_8000_train_0.124939_tar_0.007863.pth')
 saved_model_dir = os.path.join(os.getcwd(), 'saved_models', model_name, 'u2net.pth')
 
 epoch_num = 1000
