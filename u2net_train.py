@@ -25,6 +25,10 @@ from data_loader import SalObjDataset
 from model import U2NET
 from model import U2NETP
 
+import s3fs
+
+fs = s3fs.S3FileSystem()
+
 # ------- 1. define loss function --------
 
 bce_loss = nn.BCELoss(size_average=True)
@@ -45,22 +49,29 @@ def muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, labels_v):
 
 	return loss0, loss
 
-
 # ------- 2. set the directory of training dataset --------
 
 model_name = 'u2net' #'u2netp'
 
 data_dir = 'train_data/'
 
-tra_image_dir = 'FINAL12_combined/'
-tra_label_dir = 'FINAL12_MATTE/'
+# tra_image_dir = 'FINAL12_combined/'
+# tra_label_dir = 'FINAL12_MATTE/'
+
+tra_image_dir = 's3://u-2-uet-original-sagemaker/FINAL12_combined/'
+tra_label_dir = 's3://u-2-uet-original-sagemaker/FINAL12_MATTE/'
+
 
 image_ext = '.png'
 label_ext = '.png'
 
-model_dir = os.path.join(os.getcwd(), 'saved_models', model_name + os.sep)
+# model_dir = os.path.join(os.getcwd(), 'saved_models', model_name + os.sep)
 
-saved_model_dir = os.path.join(os.getcwd(), 'saved_models', model_name, 'u2net.pth')
+# saved_model_dir = os.path.join(os.getcwd(), 'saved_models', model_name, 'u2net.pth')
+saved_model_dir = os.path.join('saved_models', model_name, 'u2net.pth')
+
+
+# saved_model_dir ='s3://u-2-uet-original-sagemaker/saved_models/u2net.pth'
 
 epoch_num = 1000
 batch_size_train = 8
@@ -68,7 +79,9 @@ batch_size_val = 1
 train_num = 0
 val_num = 0
 
-tra_img_name_list = glob.glob(data_dir + tra_image_dir + '*' + image_ext)
+# tra_img_name_list = glob.glob(data_dir + tra_image_dir + '*' + image_ext)
+
+tra_img_name_list = fs.ls(tra_image_dir)[1:] # [1:] first item is folder name
 
 tra_lbl_name_list = []
 for img_path in tra_img_name_list:
@@ -80,7 +93,9 @@ for img_path in tra_img_name_list:
 	for i in range(1,len(bbb)):
 		imidx = imidx + "." + bbb[i]
 
-	tra_lbl_name_list.append(data_dir + tra_label_dir + imidx + label_ext)
+# 	tra_lbl_name_list.append(data_dir + tra_label_dir + imidx + label_ext)
+	tra_lbl_name_list.append(tra_label_dir + imidx + label_ext)
+
 
 print("---")
 print("train images: ", len(tra_img_name_list))
@@ -108,7 +123,10 @@ if(model_name=='u2net'):
 elif(model_name=='u2netp'):
     net = U2NETP(3,1)
 
-# net = torch.load(saved_model_dir)
+# # net = torch.load(saved_model_dir)
+# with fs.open(saved_model_dir) as f:
+#     net.load_state_dict(torch.load(saved_model_dir), strict = True)
+
 net.load_state_dict(torch.load(saved_model_dir), strict = True)
 
 # #2 GPUs
@@ -172,8 +190,10 @@ for epoch in range(0, epoch_num):
         if ite_num % save_freq == 0:
             
             #save state dictionary
-            torch.save(net.state_dict(), "saved_models/u2netp/itr_%d_train_%3f_tar_%3f.pth" % (ite_num, running_loss / ite_num4val, running_tar_loss / ite_num4val))
+            torch.save(net.state_dict(), "saved_models/u2net/itr_%d_train_%3f_tar_%3f.pth" % (ite_num, running_loss / ite_num4val, running_tar_loss / ite_num4val))
+#             torch.save(net.state_dict(), "s3://u-2-uet-original-sagemaker/saved_models/itr_%d_train_%3f_tar_%3f.pth" % (ite_num, running_loss / ite_num4val, running_tar_loss / ite_num4val))
 
+    
             #save entire model
             # torch.save(net, "saved_models/u2netp/itr_%d_train_%3f_tar_%3f.pth" % (ite_num, running_loss / ite_num4val, running_tar_loss / ite_num4val))
 
@@ -211,14 +231,14 @@ for epoch in range(0, epoch_num):
             # middle_input.save("saved_models/u2netp/input_itr_%d.png" % (ite_num))
 
             #save cv2
-            cv2.imwrite("saved_models/u2netp/output_itr_%d.png" % (ite_num), middle_output)
-            cv2.imwrite("saved_models/u2netp/label_itr_%d.png" % (ite_num), middle_label)
+            cv2.imwrite("saved_models/u2net/output_itr_%d.png" % (ite_num), middle_output)
+            cv2.imwrite("saved_models/u2net/label_itr_%d.png" % (ite_num), middle_label)
 
-            cv2.imwrite("saved_models/u2netp/input_itr_%d.png" % (ite_num), cv2.cvtColor(middle_input, cv2.COLOR_BGR2RGB))
+            cv2.imwrite("saved_models/u2net/input_itr_%d.png" % (ite_num), cv2.cvtColor(middle_input, cv2.COLOR_BGR2RGB))
             # # cv2.imwrite("saved_models/u2netp/prior_itr_%d.png" % (ite_num), middle_prior)
             # # cv2.imwrite("saved_models/u2netp/difference_prior_output_itr_%d.png" % (ite_num), middle_prior - middle_output)
             # # cv2.imwrite("saved_models/u2netp/difference_prior_label_itr_%d.png" % (ite_num), middle_prior - middle_label)
-            cv2.imwrite("saved_models/u2netp/difference_output_label_itr_%d.png" % (ite_num), abs(middle_output - middle_label))
+            cv2.imwrite("saved_models/u2net/difference_output_label_itr_%d.png" % (ite_num), abs(middle_output - middle_label))
 
             ite_num4val = 0
             
